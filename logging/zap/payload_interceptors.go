@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging"
+	grpc_logging "github.com/grpc-ecosystem/go-grpc-middleware/logging"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -64,7 +64,7 @@ func PayloadUnaryClientInterceptor(logger *zap.Logger, decider grpc_logging.Clie
 		logEntry := logger.With(newClientLoggerFields(ctx, method)...)
 		logProtoMessageAsJson(logEntry, req, "grpc.request.content", "client request payload logged as grpc.request.content")
 		err := invoker(ctx, method, req, reply, cc, opts...)
-		if err == nil {
+		if err == nil && ctxzap.GetLogResp(ctx) {
 			logProtoMessageAsJson(logEntry, reply, "grpc.response.content", "client response payload logged as grpc.response.content")
 		}
 		return err

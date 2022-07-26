@@ -3,7 +3,7 @@ package ctxzap
 import (
 	"context"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/tags"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -14,6 +14,15 @@ type ctxLogger struct {
 	logger *zap.Logger
 	fields []zapcore.Field
 }
+
+type ctxLogRespKeyType struct {
+}
+
+type ctxLogRespValue struct {
+	isLogResp bool
+}
+
+var ctxLogRespKey = ctxLogRespKeyType{}
 
 var (
 	ctxMarkerKey = &ctxMarker{}
@@ -85,4 +94,19 @@ func Warn(ctx context.Context, msg string, fields ...zap.Field) {
 // It is a no-op if the context does not contain a zap.Logger.
 func Error(ctx context.Context, msg string, fields ...zap.Field) {
 	Extract(ctx).WithOptions(zap.AddCallerSkip(1)).Error(msg, fields...)
+}
+
+func SetLogResp(ctx context.Context, isLogResp bool) context.Context {
+	return context.WithValue(ctx, ctxLogRespKey, ctxLogRespValue{
+		isLogResp: isLogResp,
+	})
+}
+
+// default return true
+func GetLogResp(ctx context.Context) bool {
+	ctxLogRespValue, ok := ctx.Value(ctxLogRespKey).(*ctxLogRespValue)
+	if !ok || ctxLogRespValue == nil {
+		return true
+	}
+	return ctxLogRespValue.isLogResp
 }
